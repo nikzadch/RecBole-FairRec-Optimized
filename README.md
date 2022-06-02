@@ -80,7 +80,7 @@ We list the models that we have implemented up to now:
 | **NFCF**           | 0.9193(3)     | 0.8628(3)                |   | 1.5366                   | 0.1151              | 0.0974                 | 0.0133              | 0.1018             | 0.0045                  |   | 0.4927(2)  | 0.2693(2)    | 0.9094(2) | 0.7022    |
 
 ## The Team
-RecBole-FairRec is developed and maintained by members from [RUCAIBox](http://aibox.ruc.edu.cn/), the main developers is Jiakai Tang ([@Tangjiakai](https://github.com/TangJiakai)).
+RecBole-FairRec is developed and maintained by Jiakai Tang ([@Tangjiakai](https://github.com/TangJiakai)).
 
 ## Acknowledgement
 
