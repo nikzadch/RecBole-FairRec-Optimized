@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     #parser.add_argument('--model', '-m', type=str, default='PFCN_PMF', help='name of models')
-    parser.add_argument('--model', '-m', type=str, default='PFCN_DMF', help='name of models')
+    parser.add_argument('--model', '-m', type=str, default='ItemKNN', help='name of models')
     parser.add_argument('--dataset', '-d', type=str, default='ml-1M', help='name of datasets')
     parser.add_argument('--config_files', type=str, default='test.yaml', help='config files')
 

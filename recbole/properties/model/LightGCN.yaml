@@ -1,0 +1,11 @@
+embedding_size: 64
+n_layers: 2
+reg_weight: 1e-05
+
+# Data settings
+LABEL_FIELD: label
+threshold: {'rating': 3.0}
+sst_attr_list: ["gender"]
+load_col:
+  inter: [user_id,item_id,rating]
+  user: [user_id,gender,age,occupation]

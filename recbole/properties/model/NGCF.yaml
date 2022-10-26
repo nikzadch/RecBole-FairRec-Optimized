@@ -1,0 +1,13 @@
+embedding_size: 64
+hidden_size_list: [64,64,64]
+node_dropout: 0.0
+message_dropout: 0.1
+reg_weight: 1e-5
+
+# Data settings
+LABEL_FIELD: label
+threshold: {'rating': 3.0}
+sst_attr_list: ["gender"]
+load_col:
+  inter: [user_id,item_id,rating]
+  user: [user_id,gender,age,occupation]

@@ -1,0 +1,15 @@
+type: "ED"
+n_layers: 3
+ssl_tau: 0.5
+reg_weight: 1e-5
+ssl_weight: 0.05
+drop_ratio: 0.1
+embedding_size: 64
+
+# Data settings
+LABEL_FIELD: label
+threshold: {'rating': 3.0}
+sst_attr_list: ["gender"]
+load_col:
+  inter: [user_id,item_id,rating]
+  user: [user_id,gender,age,occupation]
