@@ -839,6 +839,7 @@ class NonParityUnfairness(AbstractMetric):
         """
     smaller = True
     metric_type = EvaluatorType.RANKING
+
     metric_need = ['rec.positive_score', 'data.sst']
 
     def __init__(self, config):
@@ -902,29 +903,44 @@ class ValueUnfairness(AbstractMetric):
         """
     smaller = True
     metric_type = EvaluatorType.RANKING
+
     metric_need = ['data.positive_i', 'rec.positive_score', 'data.negative_i', 'rec.negative_score','data.sst']
 
     def __init__(self, config):
         super().__init__(config)
         self.sst_key_list = config['sst_attr_list']
+        self.mode = config['eval_args']['mode']
 
     def used_info(self, dataobject):
         pos_score = dataobject.get('rec.positive_score').numpy()
         pos_iids = dataobject.get('data.positive_i').numpy()
-        neg_score = dataobject.get('rec.negative_score').numpy()
-        neg_iids = dataobject.get('data.negative_i').numpy()
+        if self.mode != 'full':
+            neg_score = dataobject.get('rec.negative_score').numpy()
+            neg_iids = dataobject.get('data.negative_i').numpy()
         sst_value_dict = {}
         for sst_key in self.sst_key_list:
             sst_value_dict[sst_key] = dataobject.get('data.' + sst_key).numpy()
 
-        return pos_score, pos_iids, neg_score, neg_iids, sst_value_dict
+        if self.mode != 'full':
+            return pos_score, pos_iids, neg_score, neg_iids, sst_value_dict
+        else:
+            return pos_score, pos_iids, sst_value_dict
 
     def calculate_metric(self, dataobject):
-        pos_score, pos_iids, neg_score, neg_iids, sst_value_dict = self.used_info(dataobject)
-        metric_dict = {}
-        for sst_key, sst_value in sst_value_dict.items():
-            key = 'Value Unfairness of sensitive attribute {}'.format(sst_key)
-            metric_dict[key] = round(self.get_value_unfairness(pos_score, pos_iids, neg_score, neg_iids, sst_value), self.decimal_place)
+        if self.mode != 'full':
+            pos_score, pos_iids, neg_score, neg_iids, sst_value_dict = self.used_info(dataobject)
+            metric_dict = {}
+            for sst_key, sst_value in sst_value_dict.items():
+                key = 'Value Unfairness of sensitive attribute {}'.format(sst_key)
+                metric_dict[key] = round(self.get_value_unfairness(pos_score, pos_iids, neg_score, neg_iids, sst_value),
+                                     self.decimal_place)
+        else:
+            pos_score, pos_iids, sst_value_dict = self.used_info(dataobject)
+            metric_dict = {}
+            for sst_key, sst_value in sst_value_dict.items():
+                key = 'Value Unfairness of sensitive attribute {}'.format(sst_key)
+                metric_dict[key] = round(self.get_value_unfairness(pos_score, pos_iids, None, None, sst_value),
+                                         self.decimal_place)
         return metric_dict
 
     def get_value_unfairness(self, pos_score, pos_iids, neg_score, neg_iids, sst_value):
@@ -938,7 +954,11 @@ class ValueUnfairness(AbstractMetric):
             Value Unfairness
         """
         sst_unique_values, sst_indices = np.unique(sst_value, return_inverse=True)
-        iid_unique_values, iid_indices = np.unique(np.concatenate((pos_iids, neg_iids)), return_inverse=True)
+        if self.mode != 'full':
+            iid_unique_values, iid_indices = np.unique(np.concatenate((pos_iids, neg_iids)), return_inverse=True)
+        else:
+            iid_unique_values, iid_indices = np.unique(pos_iids, return_inverse=True)
+
         if len(sst_unique_values) != 2:
             raise ValueError(f'sensitive attribute must be binary')
 
@@ -953,9 +973,10 @@ class ValueUnfairness(AbstractMetric):
             sst_num[iid_indice][sst_indice] += 1
             avg_true_list[iid_indice][sst_indice] += 1
         
-        for iid_indice, sst_indice, score in zip(iid_indices[pos_len:], sst_indices, neg_score):
-            avg_pred_list[iid_indice][sst_indice] += score
-            sst_num[iid_indice][sst_indice] += 1
+        if self.mode != 'full':
+            for iid_indice, sst_indice, score in zip(iid_indices[pos_len:], sst_indices, neg_score):
+                avg_pred_list[iid_indice][sst_indice] += score
+                sst_num[iid_indice][sst_indice] += 1
         
         sst_num += 1e-5
 
@@ -984,38 +1005,51 @@ class AbsoluteUnfairness(AbstractMetric):
         """
     smaller = True
     metric_type = EvaluatorType.RANKING
+
     metric_need = ['data.positive_i', 'rec.positive_score', 'data.negative_i', 'rec.negative_score','data.sst']
 
     def __init__(self, config):
         super().__init__(config)
 #        self.sst_key = config['sst_attr_list'][0]
         self.sst_key_list = config['sst_attr_list']
+        self.mode = config['eval_args']['mode']
 
     def used_info(self, dataobject):
         pos_score = dataobject.get('rec.positive_score').numpy()
         pos_iids = dataobject.get('data.positive_i').numpy()
-        neg_score = dataobject.get('rec.negative_score').numpy()
-        neg_iids = dataobject.get('data.negative_i').numpy()
+        if self.mode != 'full':
+            neg_score = dataobject.get('rec.negative_score').numpy()
+            neg_iids = dataobject.get('data.negative_i').numpy()
         sst_value_dict = {}
         for sst_key in self.sst_key_list:
             sst_value_dict[sst_key] = dataobject.get('data.' + sst_key).numpy()
-
 #        sst_value = dataobject.get('data.' + self.sst_key).numpy()
-
 #        return pos_score, pos_iids, neg_score, neg_iids, sst_value
-        return pos_score, pos_iids, neg_score, neg_iids, sst_value_dict
+        if self.mode != 'full':
+            return pos_score, pos_iids, neg_score, neg_iids, sst_value_dict
+        else:
+            return pos_score, pos_iids, sst_value_dict
 
     def calculate_metric(self, dataobject):
 #        pos_score, pos_iids, neg_score, neg_iids, sst_value = self.used_info(dataobject)
-        pos_score, pos_iids, neg_score, neg_iids, sst_value_dict = self.used_info(dataobject)
-        metric_dict = {}
+        if self.mode != 'full':
+            pos_score, pos_iids, neg_score, neg_iids, sst_value_dict = self.used_info(dataobject)
+            metric_dict = {}
         # key = 'Absolute Unfairness of sensitive attribute {}'.format(self.sst_key)
         # metric_dict[key] = round(self.get_absolute_unfairness(pos_score, pos_iids, neg_score, neg_iids, sst_value), self.decimal_place)
 
         # return metric_dict
-        for sst_key, sst_value in sst_value_dict.items():
-            key = f'Absolute Unfairness of sensitive attribute {sst_key}'
-            metric_dict[key] = round(self.get_absolute_unfairness(pos_score, pos_iids, neg_score, neg_iids, sst_value), self.decimal_place)
+            for sst_key, sst_value in sst_value_dict.items():
+                key = f'Absolute Unfairness of sensitive attribute {sst_key}'
+                metric_dict[key] = round(self.get_absolute_unfairness(pos_score, pos_iids, neg_score, neg_iids, sst_value),
+                                     self.decimal_place)
+        else:
+            pos_score, pos_iids, sst_value_dict = self.used_info(dataobject)
+            metric_dict = {}
+            for sst_key, sst_value in sst_value_dict.items():
+                key = 'Absolute Unfairness of sensitive attribute {}'.format(sst_key)
+                metric_dict[key] = round(self.get_absolute_unfairness(pos_score, pos_iids, None, None, sst_value),
+                                        self.decimal_place)
         return metric_dict
 
     def get_absolute_unfairness(self, pos_score, pos_iids, neg_score, neg_iids, sst_value):
@@ -1029,7 +1063,11 @@ class AbsoluteUnfairness(AbstractMetric):
             Absolute Unfairness
         """
         sst_unique_values, sst_indices = np.unique(sst_value, return_inverse=True)
-        iid_unique_values, iid_indices = np.unique(np.concatenate((pos_iids, neg_iids)), return_inverse=True)
+        if self.mode != 'full':
+            iid_unique_values, iid_indices = np.unique(np.concatenate((pos_iids, neg_iids)), return_inverse=True)
+        else:
+            iid_unique_values, iid_indices = np.unique(pos_iids, return_inverse=True)
+
         if len(sst_unique_values) != 2:
             raise ValueError(f'sensitive attribute must be binary')
 
@@ -1044,10 +1082,11 @@ class AbsoluteUnfairness(AbstractMetric):
             sst_num[iid_indice][sst_indice] += 1
             avg_true_list[iid_indice][sst_indice] += 1
         
-        for iid_indice, sst_indice, score in zip(iid_indices[pos_len:], sst_indices, neg_score):
-            avg_pred_list[iid_indice][sst_indice] += score
-            sst_num[iid_indice][sst_indice] += 1
-        
+        if self.mode != 'full':
+            for iid_indice, sst_indice, score in zip(iid_indices[pos_len:], sst_indices, neg_score):
+                avg_pred_list[iid_indice][sst_indice] += score
+                sst_num[iid_indice][sst_indice] += 1
+
         sst_num += 1e-5
 
         avg_pred_list /= sst_num
@@ -1075,30 +1114,44 @@ class UnderUnfairness(AbstractMetric):
         """
     smaller = True
     metric_type = EvaluatorType.RANKING
+
     metric_need = ['data.positive_i', 'rec.positive_score', 'data.negative_i', 'rec.negative_score','data.sst']
 
     def __init__(self, config):
         super().__init__(config)
         self.sst_key_list = config['sst_attr_list']
+        self.mode = config['eval_args']['mode']
 
     def used_info(self, dataobject):
         pos_score = dataobject.get('rec.positive_score').numpy()
         pos_iids = dataobject.get('data.positive_i').numpy()
-        neg_score = dataobject.get('rec.negative_score').numpy()
-        neg_iids = dataobject.get('data.negative_i').numpy()
+        if self.mode != 'full':
+            neg_score = dataobject.get('rec.negative_score').numpy()
+            neg_iids = dataobject.get('data.negative_i').numpy()
         sst_value_dict = {}
         for sst_key in self.sst_key_list:
             sst_value_dict[sst_key] = dataobject.get('data.' + sst_key).numpy()
 
-        return pos_score, pos_iids, neg_score, neg_iids, sst_value_dict
+        if self.mode != 'full':
+            return pos_score, pos_iids, neg_score, neg_iids, sst_value_dict
+        else:
+            return pos_score, pos_iids, sst_value_dict
 
     def calculate_metric(self, dataobject):
-        pos_score, pos_iids, neg_score, neg_iids, sst_value_dict = self.used_info(dataobject)
-        metric_dict = {}
-        for sst_key, sst_value in sst_value_dict.items():
-            key = 'Underestimation Unfairness of sensitive attribute {}'.format(sst_key)
-            metric_dict[key] = round(self.get_under_unfairness(pos_score, pos_iids, neg_score, neg_iids, sst_value), self.decimal_place)
-
+        if self.mode != 'full':
+            pos_score, pos_iids, neg_score, neg_iids, sst_value_dict = self.used_info(dataobject)
+            metric_dict = {}
+            for sst_key, sst_value in sst_value_dict.items():
+                key = 'Underestimation Unfairness of sensitive attribute {}'.format(sst_key)
+                metric_dict[key] = round(self.get_under_unfairness(pos_score, pos_iids, neg_score, neg_iids, sst_value),
+                                     self.decimal_place)
+        else:
+            pos_score, pos_iids, sst_value = self.used_info(dataobject)
+            metric_dict = {}
+            for sst_key, sst_value in sst_value_dict.items():
+                key = 'Underestimation Unfairness of sensitive attribute {}'.format(sst_key)
+                metric_dict[key] = round(self.get_under_unfairness(pos_score, pos_iids, None, None, sst_value),
+                                         self.decimal_place)
         return metric_dict
 
     def get_under_unfairness(self, pos_score, pos_iids, neg_score, neg_iids, sst_value):
@@ -1112,7 +1165,11 @@ class UnderUnfairness(AbstractMetric):
             Underestimation Unfairness
         """
         sst_unique_values, sst_indices = np.unique(sst_value, return_inverse=True)
-        iid_unique_values, iid_indices = np.unique(np.concatenate((pos_iids, neg_iids)), return_inverse=True)
+        if self.mode != 'full':
+            iid_unique_values, iid_indices = np.unique(np.concatenate((pos_iids, neg_iids)), return_inverse=True)
+        else:
+            iid_unique_values, iid_indices = np.unique(pos_iids, return_inverse=True)
+
         if len(sst_unique_values) != 2:
             raise ValueError(f'sensitive attribute must be binary')
 
@@ -1127,16 +1184,17 @@ class UnderUnfairness(AbstractMetric):
             sst_num[iid_indice][sst_indice] += 1
             avg_true_list[iid_indice][sst_indice] += 1
         
-        for iid_indice, sst_indice, score in zip(iid_indices[pos_len:], sst_indices, neg_score):
-            avg_pred_list[iid_indice][sst_indice] += score
-            sst_num[iid_indice][sst_indice] += 1
-        
+        if self.mode != 'full':
+            for iid_indice, sst_indice, score in zip(iid_indices[pos_len:], sst_indices, neg_score):
+                avg_pred_list[iid_indice][sst_indice] += score
+                sst_num[iid_indice][sst_indice] += 1
+
         sst_num += 1e-5
 
         avg_pred_list /= sst_num
         avg_true_list /= sst_num
 
-        diff = np.where((avg_true_list-avg_pred_list)>0, avg_true_list-avg_pred_list, 0)
+        diff = np.where((avg_true_list-avg_pred_list) > 0, avg_true_list - avg_pred_list, 0)
         diff = np.mean(np.abs(diff[:,0] - diff[:, 1]))
 
         return diff
@@ -1158,30 +1216,44 @@ class OverUnfairness(AbstractMetric):
         """
     smaller = True
     metric_type = EvaluatorType.RANKING
+
     metric_need = ['data.positive_i', 'rec.positive_score', 'data.negative_i', 'rec.negative_score','data.sst']
 
     def __init__(self, config):
         super().__init__(config)
         self.sst_key_list = config['sst_attr_list']
+        self.mode = config['eval_args']['mode']
 
     def used_info(self, dataobject):
         pos_score = dataobject.get('rec.positive_score').numpy()
         pos_iids = dataobject.get('data.positive_i').numpy()
-        neg_score = dataobject.get('rec.negative_score').numpy()
-        neg_iids = dataobject.get('data.negative_i').numpy()
+        if self.mode != 'full':
+            neg_score = dataobject.get('rec.negative_score').numpy()
+            neg_iids = dataobject.get('data.negative_i').numpy()
         sst_value_dict = {}
         for sst_key in self.sst_key_list:
             sst_value_dict[sst_key] = dataobject.get('data.' + sst_key).numpy()
-
-        return pos_score, pos_iids, neg_score, neg_iids, sst_value_dict
+#        return pos_score, pos_iids, neg_score, neg_iids, sst_value_dict
+        if self.mode != 'full':
+            return pos_score, pos_iids, neg_score, neg_iids, sst_value_dict
+        else:
+            return pos_score, pos_iids, sst_value_dict
 
     def calculate_metric(self, dataobject):
-        pos_score, pos_iids, neg_score, neg_iids, sst_value_dict = self.used_info(dataobject)
-        metric_dict = {}
-        for sst_key, sst_value in sst_value_dict.items():
-            key = 'Overestimation Unfairness of sensitive attribute {}'.format(sst_key)
-            metric_dict[key] = round(self.get_over_unfairness(pos_score, pos_iids, neg_score, neg_iids, sst_value), self.decimal_place)
-
+        if self.mode != 'full':
+            pos_score, pos_iids, neg_score, neg_iids, sst_value_dict = self.used_info(dataobject)
+            metric_dict = {}
+            for sst_key, sst_value in sst_value_dict.items():
+                key = 'Overestimation Unfairness of sensitive attribute {}'.format(sst_key)
+                metric_dict[key] = round(self.get_over_unfairness(pos_score, pos_iids, neg_score, neg_iids, sst_value),
+                                     self.decimal_place)
+        else:
+            pos_score, pos_iids, sst_value = self.used_info(dataobject)
+            metric_dict = {}
+            for sst_key, sst_value in sst_value_dict.items():
+                key = 'Overestimation Unfairness of sensitive attribute {}'.format(sst_key)
+                metric_dict[key] = round(self.get_over_unfairness(pos_score, pos_iids, None, None, sst_value),
+                                     self.decimal_place)
         return metric_dict
 
     def get_over_unfairness(self, pos_score, pos_iids, neg_score, neg_iids, sst_value):
@@ -1195,7 +1267,11 @@ class OverUnfairness(AbstractMetric):
             Overestimation Unfairness
         """
         sst_unique_values, sst_indices = np.unique(sst_value, return_inverse=True)
-        iid_unique_values, iid_indices = np.unique(np.concatenate((pos_iids, neg_iids)), return_inverse=True)
+        # iid_unique_values, iid_indices = np.unique(np.concatenate((pos_iids, neg_iids)), return_inverse=True)
+        if self.mode != 'full':
+            iid_unique_values, iid_indices = np.unique(np.concatenate((pos_iids, neg_iids)), return_inverse=True)
+        else:
+            iid_unique_values, iid_indices = np.unique(pos_iids, return_inverse=True)
         if len(sst_unique_values) != 2:
             raise ValueError(f'sensitive attribute must be binary')
 
@@ -1210,16 +1286,17 @@ class OverUnfairness(AbstractMetric):
             sst_num[iid_indice][sst_indice] += 1
             avg_true_list[iid_indice][sst_indice] += 1
         
-        for iid_indice, sst_indice, score in zip(iid_indices[pos_len:], sst_indices, neg_score):
-            avg_pred_list[iid_indice][sst_indice] += score
-            sst_num[iid_indice][sst_indice] += 1
-        
+        if self.mode != 'full':
+            for iid_indice, sst_indice, score in zip(iid_indices[pos_len:], sst_indices, neg_score):
+                avg_pred_list[iid_indice][sst_indice] += score
+                sst_num[iid_indice][sst_indice] += 1
+
         sst_num += 1e-5
 
         avg_pred_list /= sst_num
         avg_true_list /= sst_num
 
-        diff = np.where((avg_pred_list-avg_true_list)>0, avg_pred_list-avg_true_list, 0)
+        diff = np.where((avg_pred_list-avg_true_list) > 0, avg_pred_list - avg_true_list, 0)
         diff = np.mean(np.abs(diff[:,0] - diff[:, 1]))
 
         return diff
@@ -1245,6 +1322,7 @@ class DifferentialFairness(AbstractMetric):
     """
     smaller = True
     metric_type = EvaluatorType.RANKING
+
     metric_need = ['data.positive_i', 'rec.positive_score', 'data.sst']
 
     def __init__(self, config):
@@ -1290,8 +1368,9 @@ class DifferentialFairness(AbstractMetric):
         for i in range(len(iid_unique_values)):
             for j in range(len(sst_unique_values)):
                 indices = (iid_indices==i)*(sst_indices==j)
-                score_matric[i,j] = (score[indices].sum()+dirichlet_alpha)/(indices.sum()+concentration_parameter)
-
+                score_matric[i, j] = (score[indices].sum() + dirichlet_alpha) / (
+                            indices.sum() + concentration_parameter)
+                            
         for i in range(len(sst_unique_values)):
             for j in range(i+1, len(sst_unique_values)):
                 epsilon = np.abs(np.log(score_matric[:,i])-np.log(score_matric[:,j]))
