@@ -6,7 +6,8 @@ use_gpu: True
 state: INFO
 reproducibility: True
 data_path: 'dataset'
-checkpoint_dir: 'saved/saved_PFCN_PMF'
+#checkpoint_dir: 'saved/saved_PFCN_PMF'
+checkpoint_dir: 'saved/saved_ml-1M'
 dataset: ml-1M
 save_dataset: False
 save_dataloaders: False
