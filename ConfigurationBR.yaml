@@ -53,6 +53,8 @@ metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "Ite
 
 valid_metric: NDCG@5
 topk: [5]
+# a added br to omit second {actually first and it is gender} sensitive attribute for each topK metric since this dataset doesnt have gender
+BR: [1]
 popularity_ratio: 0.1
 eval_batch_size: 4096
 loss_decimal_place: 4

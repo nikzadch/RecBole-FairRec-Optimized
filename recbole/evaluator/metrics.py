@@ -25,6 +25,7 @@ set of user(u)-item(i) pairs, :math:`\hat r_{u i}` represents the score predicte
 from logging import getLogger
 
 import numpy as np
+import pandas as pd
 from collections import Counter
 from sklearn.metrics import auc as sk_auc
 from sklearn.metrics import mean_absolute_error, mean_squared_error
@@ -1377,3 +1378,169 @@ class DifferentialFairness(AbstractMetric):
                 epsilon_values = np.where(epsilon>epsilon_values, epsilon, epsilon_values)
         
         return epsilon_values.mean()
+
+class NDCG_sep(TopkMetric):
+    """
+    Sensitive-Attribute-Seperated NDCG Metric implemented by Keywan (aka. K1) 
+    special thanks to bhuebner3 for his contribute
+    
+    """
+    def __init__(self, config):
+        super().__init__(config)
+        self.sst_attr_list = config['sst_attr_list']
+
+    def calculate_metric(self, dataobject):
+        sst_value = self.sst_attr_list[0]
+        #sst = dataobject.get('data.' + sst_value).numpy()
+        #unique_value = np.unique(sst)
+        test_df = pd.read_csv('./dataset/ml-1M/ml-1M.user', sep = '\t')
+        sst_column = np.array(test_df[sst_value + ':token'])
+        unique_value = np.unique(sst_column)
+        
+        metric_dict = {}
+        for value in unique_value:
+            pos_index, pos_len = self.used_info(dataobject)
+            pos_index = pos_index[sst_column==value]
+            pos_len = pos_len[sst_column==value]
+            result = self.metric_info(pos_index, pos_len)
+            metric_dict.update(self.topk_result(f"ndcg of sensitive attribute gender {'Women' if value=='F' or value=='f' else 'Men'}", result))
+
+        return metric_dict
+
+    def metric_info(self, pos_index, pos_len):
+        len_rank = np.full_like(pos_len, pos_index.shape[1])
+        idcg_len = np.where(pos_len > len_rank, len_rank, pos_len)
+
+        iranks = np.zeros_like(pos_index, dtype=np.float64)
+        iranks[:, :] = np.arange(1, pos_index.shape[1] + 1)
+        idcg = np.cumsum(1.0 / np.log2(iranks + 1), axis=1)
+        for row, idx in enumerate(idcg_len):
+            idcg[row, idx:] = idcg[row, idx - 1]
+
+        ranks = np.zeros_like(pos_index, dtype=np.float64)
+        ranks[:, :] = np.arange(1, pos_index.shape[1] + 1)
+        dcg = 1.0 / np.log2(ranks + 1)
+        dcg = np.cumsum(np.where(pos_index, dcg, 0), axis=1)
+
+        result = dcg / idcg
+        return result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# class MyMetric(TopkMetricForGender):
+#     """
+#     The DifferentialFairness metric aims to ensure equitable treatment for all protected groups.
+    
+#     For further details, please refer to the https://dl.acm.org/doi/10.1145/3442381.3449904
+
+#     For gender bias in our recommender (assuming a gender binary), we can estimate epsilon-DF per sensitive item i by verifying that:
+    
+#     .. math::
+#              \begin{gathered}
+#         e^{-\epsilon} \leq \frac{\sum_{u: A=m} \hat{y}_{u i}+\alpha}{N_{m}+2 \alpha} \frac{N_{f}+2 \alpha}{\sum_{u: A=f} \hat{y}_{u i}+\alpha} \leq e^{\epsilon} \\
+#         e^{-\epsilon} \leq \frac{\sum_{u: A=m}\left(1-\hat{y}_{u i}\right)+\alpha}{N_{m}+2 \alpha} \frac{N_{f}+2 \alpha}{\sum_{u: A=f}\left(1-\hat{y}_{u i}\right)+\alpha} \leq e^{\epsilon},
+#         \end{gathered}
+#     :math:`\alpha` is each entry of the parameter of a symmetric Dirichlet prior with concentration parameter 2\alpha.
+#     :math:`i` is an item.
+#     :math:`N_A` is the number of users of gender A (m or f ).
+   
+#     """
+#     smaller = True
+#     metric_type = EvaluatorType.RANKING
+
+#     metric_need = ['data.positive_i', 'rec.positive_score', 'data.sst']
+
+#     def __init__(self, config):
+#         super().__init__(config)
+#         self.sst_key = config['sst_attr_list'][0]
+
+#     def used_info(self, dataobject):
+#         score = dataobject.get('rec.positive_score').numpy()
+#         iids = dataobject.get('data.positive_i').numpy()
+#         #data_label = dataobject.get('data.label')
+#         sst_value = dataobject.get('data.' + self.sst_key).numpy()
+
+#         return score, iids, sst_value
+
+#     def calculate_metric(self, dataobject):
+#         score, iids, sst_value = self.used_info(dataobject)
+#         metric_dict = {}
+#         key = 'MyMetric @ xx of sensitive attribute {}'.format(self.sst_key)
+#         metric_dict[key] = round(self.get_differential_fairness(score, iids, sst_value), self.decimal_place)
+
+#         return metric_dict
+
+#     def get_differential_fairness(self, score, iids, sst_value):
+#         r"""
+
+#         Args:
+#             score(numpy.array): score prediction for user-item pairs
+#             iids(numpy.array): item_id array of interaction ITEM_FIELD
+#             sst_value(numpy.array): sensitive attribute's value of corresponding users/items
+#         Return:
+#             Differential Fairness
+#         """
+#         sst_value = sst_value
+#         print (len(sst_value))
+#         sst_unique_values, sst_indices = np.unique(sst_value, return_inverse=True)
+#         iid_unique_values, iid_indices = np.unique(iids, return_inverse=True)
+#         score_matric = np.zeros((len(iid_unique_values), len(sst_unique_values)), dtype=np.float32)
+#         epsilon_values = np.zeros(len(iid_unique_values), dtype=np.float32)
+
+#         concentration_parameter = 1.0
+#         dirichlet_alpha = concentration_parameter/len(iid_unique_values)
+
+#         for i in range(len(iid_unique_values)):
+#             for j in range(len(sst_unique_values)):
+#                 indices = (iid_indices==i)*(sst_indices==j)
+#                 score_matric[i, j] = (score[indices].sum() + dirichlet_alpha) / (
+#                             indices.sum() + concentration_parameter)
+                            
+#         for i in range(len(sst_unique_values)):
+#             for j in range(i+1, len(sst_unique_values)):
+#                 epsilon = np.abs(np.log(score_matric[:,i])-np.log(score_matric[:,j]))
+#                 epsilon_values = np.where(epsilon>epsilon_values, epsilon, epsilon_values)
+        
+#         return epsilon_values.mean()
