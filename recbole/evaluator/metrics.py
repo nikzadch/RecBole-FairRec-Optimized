@@ -1415,7 +1415,7 @@ class NDCG_sep(TopkMetric):
         metric_dict = {}
         for value in unique_value:
             pos_index, pos_len = self.used_info(dataobject)
-            import pdb; pdb.set_trace()
+#            import pdb; pdb.set_trace()
             pos_index = pos_index[sst_column==value]
             pos_len = pos_len[sst_column==value]
             result = self.metric_info(pos_index, pos_len)
