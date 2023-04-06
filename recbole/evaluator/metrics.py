@@ -1388,18 +1388,34 @@ class NDCG_sep(TopkMetric):
     def __init__(self, config):
         super().__init__(config)
         self.sst_attr_list = config['sst_attr_list']
+        self.datasetML = config['ML'][0]
+        self.datasetLF = config['LF'][0]
+        self.datasetBR = config['BR'][0]
 
     def calculate_metric(self, dataobject):
         sst_value = self.sst_attr_list[0]
         #sst = dataobject.get('data.' + sst_value).numpy()
         #unique_value = np.unique(sst)
-        test_df = pd.read_csv('./dataset/ml-1M/ml-1M.user', sep = '\t')
-        sst_column = np.array(test_df[sst_value + ':token'])
-        unique_value = np.unique(sst_column)
+        if self.datasetML == 1:
+            test_df = pd.read_csv('./dataset/ml-1M/ml-1M.user', sep = '\t')
+            sst_column = np.array(test_df[sst_value + ':token'])
+            unique_value = np.unique(sst_column)
+        elif self.datasetLF == 1:
+            test_df = pd.read_csv('./dataset/LastFM-100K/LastFM-100K.user', sep = '\t')
+            sst_column = np.array(test_df[sst_value + ':token'])
+            unique_value = np.unique(sst_column)
+        elif self.datasetBR == 1:
+            test_df = pd.read_csv('./dataset/BookRec-100K/BookRec-100K.user', sep = '\t')
+            sst_column = np.array(test_df[sst_value + ':token'])
+            unique_value = np.unique(sst_column)
+
+#        sst_column = np.array(test_df[sst_value + ':token'])
+#        unique_value = np.unique(sst_column)
         
         metric_dict = {}
         for value in unique_value:
             pos_index, pos_len = self.used_info(dataobject)
+            import pdb; pdb.set_trace()
             pos_index = pos_index[sst_column==value]
             pos_len = pos_len[sst_column==value]
             result = self.metric_info(pos_index, pos_len)
