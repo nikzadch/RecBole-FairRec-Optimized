@@ -21,13 +21,12 @@ load_col:
   user: [user_id,gender,age]
 #  item: [item_id]
 
-fill_nan: True
-normalize_all: True
-
-# model: ItemKNN
+# fill_nan: True
+# normalize_all: True
 
 # model config
 model: PFCN_PMF
+# model: ItemKNN
 
 # training settings
 epochs: 1000
@@ -51,6 +50,11 @@ metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "Ite
 #metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NDCG_sep"]
 valid_metric: NDCG@10
 topk: [5, 10, 15]
+# dataset indicator
+BR: [0]
+ML: [0]
+LF: [1]
+#
 popularity_ratio: 0.1
 eval_batch_size: 4096
 loss_decimal_place: 4
