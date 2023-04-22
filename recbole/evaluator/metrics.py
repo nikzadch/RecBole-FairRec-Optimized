@@ -1443,6 +1443,7 @@ class NDCG_sep(TopkMetric):
 #        sst_column = np.array(test_df[sst_value + ':token'])
 #        unique_value = np.unique(sst_column)
         metric_dict = {}
+
         for sst in self.sst_key_list:
 #        sst = 'gender'
             sst_value = sst_value_dict[sst]
@@ -1468,6 +1469,7 @@ class NDCG_sep(TopkMetric):
 #            metric_dict.update({f"Relative Difference of NDCG of sensitive attribute {sst} @{(i+1)*5}": round(item, 4)})
                 key = f"Relative Difference of NDCG of sensitive attribute {sst} @{(i+1)*5}"
                 metric_dict[key] = round(item, 4)
+
         return metric_dict
 
     def metric_info(self, pos_index, pos_len):
