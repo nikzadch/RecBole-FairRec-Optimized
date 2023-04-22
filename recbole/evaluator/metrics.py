@@ -31,6 +31,7 @@ from sklearn.metrics import auc as sk_auc
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from recbole.evaluator.utils import _binary_clf_curve
+from recbole.data import *
 from recbole.evaluator.base_metric import AbstractMetric, TopkMetric, LossMetric
 from recbole.utils import EvaluatorType
 
@@ -1384,42 +1385,90 @@ class NDCG_sep(TopkMetric):
     Sensitive-Attribute-Seperated NDCG Metric implemented by Keywan (aka. K1) 
     special thanks to bhuebner3 for his contribute
     
+    To determine whether the two NDCG@5 metrics are too close or too far apart, 
+    you can calculate the percentage difference between them.
+    To do this, subtract the NDCG@5 for group 2 from the NDCG@5 for group 1, then 
+    divide the result by the average of the two values, and multiply by 100. 
+    In formula:
+
+    |NDCG@5 for group 1 - NDCG@5 for group 2| / ((NDCG@5 for group 1 + NDCG@5 for group 2) / 2) x 100
+    
+    This will give you a percentage that represents the relative difference between 
+    the two NDCG@5 metrics.
+    If the percentage difference is small (e.g., less than 10%), it suggests that the 
+    two metrics are very similar. If the percentage difference is large 
+    (e.g., greater than 50%), it suggests that the two metrics are significantly 
+    different. A moderate percentage difference (e.g., between 10% to 50%) suggests 
+    there is some difference between the two metrics, but the magnitude of 
+    the difference may depend on other factors such as the context, sample size, 
+    and other relevant factors.
+
     """
+    smaller = True
+    metric_need = ['data.label', 'data.sst', 'rec.meanrank', 'rec.topk', 'rec.items']
+#    def __init__(self, config, interaction):
     def __init__(self, config):
         super().__init__(config)
-        self.sst_attr_list = config['sst_attr_list']
+        self.sst_key_list = config['sst_attr_list']
         self.datasetML = config['ML'][0]
         self.datasetLF = config['LF'][0]
         self.datasetBR = config['BR'][0]
+#        self.test = interaction.
+#        self.userTEST = interaction[self.USER_ID]
+#        self.user0TEST = self.USER_ID
+#        self.user1TEST = self.user_ids
 
     def calculate_metric(self, dataobject):
-        sst_value = self.sst_attr_list[0]
+        #sst_value = self.sst_attr_list[0]
         #sst = dataobject.get('data.' + sst_value).numpy()
         #unique_value = np.unique(sst)
-        if self.datasetML == 1:
-            test_df = pd.read_csv('./dataset/ml-1M/ml-1M.user', sep = '\t')
-            sst_column = np.array(test_df[sst_value + ':token'])
-            unique_value = np.unique(sst_column)
-        elif self.datasetLF == 1:
-            test_df = pd.read_csv('./dataset/LastFM-100K/LastFM-100K.user', sep = '\t')
-            sst_column = np.array(test_df[sst_value + ':token'])
-            unique_value = np.unique(sst_column)
-        elif self.datasetBR == 1:
-            test_df = pd.read_csv('./dataset/BookRec-100K/BookRec-100K.user', sep = '\t')
-            sst_column = np.array(test_df[sst_value + ':token'])
-            unique_value = np.unique(sst_column)
+        
+        sst_value_dict = {}
+        for sst_key in self.sst_key_list:
+            sst_value_dict[sst_key] = dataobject.get('data.' + sst_key).numpy()
+
+        # if self.datasetML == 1:
+        #     test_df = pd.read_csv('./dataset/ml-1M/ml-1M.user', sep = '\t')
+        #     sst_column = np.array(test_df[sst_value + ':token'])
+        #     unique_value = np.unique(sst_column)
+        # elif self.datasetLF == 1:
+        #     test_df = pd.read_csv('./dataset/LastFM-100K/LastFM-100K.user', sep = '\t')
+        #     sst_column = np.array(test_df[sst_value + ':token'])
+        #     unique_value = np.unique(sst_column)
+        # elif self.datasetBR == 1:
+        #     test_df = pd.read_csv('./dataset/BookRec-100K/BookRec-100K.user', sep = '\t')
+        #     sst_column = np.array(test_df[sst_value + ':token'])
+        #     unique_value = np.unique(sst_column)
 
 #        sst_column = np.array(test_df[sst_value + ':token'])
 #        unique_value = np.unique(sst_column)
-        
         metric_dict = {}
-        for value in unique_value:
-            pos_index, pos_len = self.used_info(dataobject)
-#            import pdb; pdb.set_trace()
-            pos_index = pos_index[sst_column==value]
-            pos_len = pos_len[sst_column==value]
-            result = self.metric_info(pos_index, pos_len)
-            metric_dict.update(self.topk_result(f"ndcg of sensitive attribute gender {'Women' if value=='F' or value=='f' else 'Men'}", result))
+
+        for sst in self.sst_key_list:
+#        sst = 'gender'
+            sst_value = sst_value_dict[sst]
+            unique_value = np.unique(sst_value)
+            results = []
+            final = []
+            LAST = []
+            for iter, value in enumerate(unique_value):
+                pos_index, pos_len = self.used_info(dataobject)
+    #            import pdb; pdb.set_trace()
+    #            import torch ; sst_column = sst_column[torch.arange(len(pos_index))] # dataobject.get('data.gender')
+                pos_index = pos_index[sst_value == value]
+                pos_len = pos_len[sst_value == value]
+                results.append(self.metric_info(pos_index, pos_len))
+    #            metric_dict.update(self.topk_result(f"ndcg of sensitive attribute gender {'Women' if value=='F' or value=='f' else 'Men'}", result))
+                tmp = self.topk_result(f"metric for {sst} : '{value}'", results[iter])
+                final.append(list(tmp.values()))
+    #        result = abs(results[0] - results[1]) / ((results[0] + results[1]) / 2) * 100
+    #        metric_dict.update(self.topk_result(f"Relative Difference of NDCG of sensitive attribute {sst}", result))
+            for i in range(len(final[0])):
+                LAST.append(abs(final[0][i] - final[1][i]) / (final[0][i] + final[1][i] / 2) * 100 )
+            for i, item in enumerate(LAST):  
+#            metric_dict.update({f"Relative Difference of NDCG of sensitive attribute {sst} @{(i+1)*5}": round(item, 4)})
+                key = f"Relative Difference of NDCG of sensitive attribute {sst} @{(i+1)*5}"
+                metric_dict[key] = round(item, 4)
 
         return metric_dict
 
@@ -1441,122 +1490,3 @@ class NDCG_sep(TopkMetric):
         result = dcg / idcg
         return result
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# class MyMetric(TopkMetricForGender):
-#     """
-#     The DifferentialFairness metric aims to ensure equitable treatment for all protected groups.
-    
-#     For further details, please refer to the https://dl.acm.org/doi/10.1145/3442381.3449904
-
-#     For gender bias in our recommender (assuming a gender binary), we can estimate epsilon-DF per sensitive item i by verifying that:
-    
-#     .. math::
-#              \begin{gathered}
-#         e^{-\epsilon} \leq \frac{\sum_{u: A=m} \hat{y}_{u i}+\alpha}{N_{m}+2 \alpha} \frac{N_{f}+2 \alpha}{\sum_{u: A=f} \hat{y}_{u i}+\alpha} \leq e^{\epsilon} \\
-#         e^{-\epsilon} \leq \frac{\sum_{u: A=m}\left(1-\hat{y}_{u i}\right)+\alpha}{N_{m}+2 \alpha} \frac{N_{f}+2 \alpha}{\sum_{u: A=f}\left(1-\hat{y}_{u i}\right)+\alpha} \leq e^{\epsilon},
-#         \end{gathered}
-#     :math:`\alpha` is each entry of the parameter of a symmetric Dirichlet prior with concentration parameter 2\alpha.
-#     :math:`i` is an item.
-#     :math:`N_A` is the number of users of gender A (m or f ).
-   
-#     """
-#     smaller = True
-#     metric_type = EvaluatorType.RANKING
-
-#     metric_need = ['data.positive_i', 'rec.positive_score', 'data.sst']
-
-#     def __init__(self, config):
-#         super().__init__(config)
-#         self.sst_key = config['sst_attr_list'][0]
-
-#     def used_info(self, dataobject):
-#         score = dataobject.get('rec.positive_score').numpy()
-#         iids = dataobject.get('data.positive_i').numpy()
-#         #data_label = dataobject.get('data.label')
-#         sst_value = dataobject.get('data.' + self.sst_key).numpy()
-
-#         return score, iids, sst_value
-
-#     def calculate_metric(self, dataobject):
-#         score, iids, sst_value = self.used_info(dataobject)
-#         metric_dict = {}
-#         key = 'MyMetric @ xx of sensitive attribute {}'.format(self.sst_key)
-#         metric_dict[key] = round(self.get_differential_fairness(score, iids, sst_value), self.decimal_place)
-
-#         return metric_dict
-
-#     def get_differential_fairness(self, score, iids, sst_value):
-#         r"""
-
-#         Args:
-#             score(numpy.array): score prediction for user-item pairs
-#             iids(numpy.array): item_id array of interaction ITEM_FIELD
-#             sst_value(numpy.array): sensitive attribute's value of corresponding users/items
-#         Return:
-#             Differential Fairness
-#         """
-#         sst_value = sst_value
-#         print (len(sst_value))
-#         sst_unique_values, sst_indices = np.unique(sst_value, return_inverse=True)
-#         iid_unique_values, iid_indices = np.unique(iids, return_inverse=True)
-#         score_matric = np.zeros((len(iid_unique_values), len(sst_unique_values)), dtype=np.float32)
-#         epsilon_values = np.zeros(len(iid_unique_values), dtype=np.float32)
-
-#         concentration_parameter = 1.0
-#         dirichlet_alpha = concentration_parameter/len(iid_unique_values)
-
-#         for i in range(len(iid_unique_values)):
-#             for j in range(len(sst_unique_values)):
-#                 indices = (iid_indices==i)*(sst_indices==j)
-#                 score_matric[i, j] = (score[indices].sum() + dirichlet_alpha) / (
-#                             indices.sum() + concentration_parameter)
-                            
-#         for i in range(len(sst_unique_values)):
-#             for j in range(i+1, len(sst_unique_values)):
-#                 epsilon = np.abs(np.log(score_matric[:,i])-np.log(score_matric[:,j]))
-#                 epsilon_values = np.where(epsilon>epsilon_values, epsilon, epsilon_values)
-        
-#         return epsilon_values.mean()
