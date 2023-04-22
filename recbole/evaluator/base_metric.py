@@ -50,7 +50,7 @@ class TopkMetric(AbstractMetric):
         config (Config): The config of evaluator.
     """
     metric_type = EvaluatorType.RANKING
-    metric_need = ['rec.topk',' data.user2group_label']
+    metric_need = ['rec.topk',' data.user2group_label', 'data.sst']
 
     def __init__(self, config):
         super().__init__(config)
