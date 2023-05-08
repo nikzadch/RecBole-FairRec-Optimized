@@ -1449,7 +1449,7 @@ class NDCG_sep(TopkMetric):
             unique_value = np.unique(sst_value)
             results = []
             final = []
-            LAST = []
+            LASTt = []
             for iter, value in enumerate(unique_value):
                 pos_index, pos_len = self.used_info(dataobject)
     #            import pdb; pdb.set_trace()
@@ -1463,8 +1463,8 @@ class NDCG_sep(TopkMetric):
     #        result = abs(results[0] - results[1]) / ((results[0] + results[1]) / 2) * 100
     #        metric_dict.update(self.topk_result(f"Relative Difference of NDCG of sensitive attribute {sst}", result))
             for i in range(len(final[0])):
-                LAST.append(abs(final[0][i] - final[1][i]) / (final[0][i] + final[1][i] / 2) * 100 )
-            for i, item in enumerate(LAST):  
+                LASTt.append(abs(final[0][i] - final[1][i]) / (final[0][i] + final[1][i] / 2) * 100 )
+            for i, item in enumerate(LASTt):  
 #            metric_dict.update({f"Relative Difference of NDCG of sensitive attribute {sst} @{(i+1)*5}": round(item, 4)})
                 key = f"Relative Difference of NDCG of sensitive attribute {sst} @{(i+1)*5}"
                 metric_dict[key] = round(item, 4)
