@@ -24,7 +24,7 @@ fill_nan: True
 normalize_all: True
 # model config
 # model: ItemKNN
-model : PFCN_PMF
+# model : PFCN_PMF
 
 filter_net_by_inter: True
 undirected_net: True
@@ -32,14 +32,15 @@ undirected_net: True
 
 # training settings
 epochs: 1000
-train_batch_size: 4096
+# train_batch_size: 4096
+train_batch_size: 2048
 learner: adam
-learning_rate: 0.0001
-eval_step: 1
-stopping_step: 10
+# learning_rate: 0.0001
+# eval_step: 1
+# stopping_step: 10
 neg_sampling: 
   uniform: 1
-weight_decay: 0.00001
+# weight_decay: 0.00001
 
 # evalution settings
 eval_args:
