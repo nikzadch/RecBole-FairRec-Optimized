@@ -1450,7 +1450,8 @@ class NDCG_sep(TopkMetricForsst):
         for sst in self.sst_key_list:
 #        sst = 'gender'
             # sst_value = sst_value_dict[sst]
-            sst_value = sst_value_dictMine[sst]
+            # sst_value = sst_value_dictMine[sst]
+            sst_value = sst_value_dict[sst] if self.datasetLF == 1 else sst_value_dictMine[sst]
             unique_value = np.unique(sst_value)
             results = []
             final = []
