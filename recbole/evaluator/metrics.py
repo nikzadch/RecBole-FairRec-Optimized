@@ -32,7 +32,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from recbole.evaluator.utils import _binary_clf_curve
 from recbole.data import *
-from recbole.evaluator.base_metric import AbstractMetric, TopkMetric, LossMetric
+from recbole.evaluator.base_metric import AbstractMetric, TopkMetric, LossMetric, TopkMetricForsst
 from recbole.utils import EvaluatorType
 
 
@@ -158,6 +158,7 @@ class Recall(TopkMetric):
 
     def calculate_metric(self, dataobject):
         pos_index, pos_len = self.used_info(dataobject)
+        # import pdb; pdb.set_trace()
         result = self.metric_info(pos_index, pos_len)
         metric_dict = self.topk_result('recall', result)
         return metric_dict
@@ -881,6 +882,7 @@ class NonParityUnfairness(AbstractMetric):
 
         sst_avg_score = []
         for s in unique_value:
+            # import pdb; pdb.set_trace()
             sst_avg_score.append(np.mean(score[sst_value==s]))
 
         if len(unique_value) == 2:
@@ -1036,6 +1038,7 @@ class AbsoluteUnfairness(AbstractMetric):
 #        pos_score, pos_iids, neg_score, neg_iids, sst_value = self.used_info(dataobject)
         if self.mode != 'full':
             pos_score, pos_iids, neg_score, neg_iids, sst_value_dict = self.used_info(dataobject)
+            # import pdb; pdb.set_trace()
             metric_dict = {}
         # key = 'Absolute Unfairness of sensitive attribute {}'.format(self.sst_key)
         # metric_dict[key] = round(self.get_absolute_unfairness(pos_score, pos_iids, neg_score, neg_iids, sst_value), self.decimal_place)
@@ -1380,7 +1383,7 @@ class DifferentialFairness(AbstractMetric):
         
         return epsilon_values.mean()
 
-class NDCG_sep(TopkMetric):
+class NDCG_sep(TopkMetricForsst):
     """
     Sensitive-Attribute-Seperated NDCG Metric implemented by Keywan (aka. K1) 
     special thanks to bhuebner3 for his contribute
@@ -1405,7 +1408,7 @@ class NDCG_sep(TopkMetric):
 
     """
     smaller = True
-    metric_need = ['data.label', 'data.sst', 'rec.meanrank', 'rec.topk', 'rec.items']
+    metric_need = ['data.label', 'data.sst', 'rec.meanrank', 'rec.topk', 'rec.items', 'data.usersst']
 #    def __init__(self, config, interaction):
     def __init__(self, config):
         super().__init__(config)
@@ -1419,13 +1422,14 @@ class NDCG_sep(TopkMetric):
 #        self.user1TEST = self.user_ids
 
     def calculate_metric(self, dataobject):
+        pos_index, pos_len, sst_value_dict, sst_value_dictMine = self.used_info(dataobject)
         #sst_value = self.sst_attr_list[0]
         #sst = dataobject.get('data.' + sst_value).numpy()
         #unique_value = np.unique(sst)
         
-        sst_value_dict = {}
-        for sst_key in self.sst_key_list:
-            sst_value_dict[sst_key] = dataobject.get('data.' + sst_key).numpy()
+        # sst_value_dict = {}
+        # for sst_key in self.sst_key_list:
+        #     sst_value_dict[sst_key] = dataobject.get('data.' + sst_key).numpy()
 
         # if self.datasetML == 1:
         #     test_df = pd.read_csv('./dataset/ml-1M/ml-1M.user', sep = '\t')
@@ -1446,18 +1450,20 @@ class NDCG_sep(TopkMetric):
 
         for sst in self.sst_key_list:
 #        sst = 'gender'
-            sst_value = sst_value_dict[sst]
+            # sst_value = sst_value_dict[sst]
+            # sst_value = sst_value_dictMine[sst]
+            sst_value = sst_value_dict[sst] if self.datasetLF == 1 else sst_value_dictMine[sst]
             unique_value = np.unique(sst_value)
             results = []
             final = []
             LASTt = []
             for iter, value in enumerate(unique_value):
-                pos_index, pos_len = self.used_info(dataobject)
-    #            import pdb; pdb.set_trace()
+                # pos_index, pos_len = self.used_info(dataobject)
+                # import pdb; pdb.set_trace()
     #            import torch ; sst_column = sst_column[torch.arange(len(pos_index))] # dataobject.get('data.gender')
-                pos_index = pos_index[sst_value == value]
-                pos_len = pos_len[sst_value == value]
-                results.append(self.metric_info(pos_index, pos_len))
+                pos_indexTMP = pos_index[sst_value == value]
+                pos_lenTMP = pos_len[sst_value == value]
+                results.append(self.metric_info(pos_indexTMP, pos_lenTMP))
     #            metric_dict.update(self.topk_result(f"ndcg of sensitive attribute gender {'Women' if value=='F' or value=='f' else 'Men'}", result))
                 tmp = self.topk_result(f"metric for {sst} : '{value}'", results[iter])
                 final.append(list(tmp.values()))

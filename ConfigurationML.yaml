@@ -9,6 +9,7 @@ data_path: 'dataset'
 #checkpoint_dir: 'saved/saved_PFCN_PMF'
 checkpoint_dir: 'saved/saved_ml-1M'
 dataset: ml-1M
+#dataset: ml-100k
 save_dataset: False
 save_dataloaders: False
 
@@ -22,18 +23,18 @@ load_col:
   item: [item_id]
 
 # model config
-model: PFCN_PMF
+# model: PFCN_PMF
 
 # training settings
 epochs: 1000
 train_batch_size: 2048
 learner: adam
-learning_rate: 0.0001
-eval_step: 1
-stopping_step: 10
+# learning_rate: 0.0001
+# eval_step: 1
+# stopping_step: 10
 neg_sampling: 
   uniform: 1
-weight_decay: 0.00001
+# weight_decay: 0.00001
 
 # evalution settings
 eval_args:
@@ -44,7 +45,8 @@ eval_args:
 
 metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "ItemCoverage", "GiniIndex", "DifferentialFairness","ValueUnfairness","AbsoluteUnfairness", 
         "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage"]
-#metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NDCG_sep"]
+#metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NonParityUnfairness", "AbsoluteUnfairness", "NDCG_sep"]
+
 valid_metric: NDCG@10
 topk: [5, 10, 15]
 # dataset indicator
