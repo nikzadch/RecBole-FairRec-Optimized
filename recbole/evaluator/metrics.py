@@ -1457,7 +1457,7 @@ class NDCG_sep(TopkMetricForsst):
             LASTt = []
             for iter, value in enumerate(unique_value):
                 # pos_index, pos_len = self.used_info(dataobject)
-                import pdb; pdb.set_trace()
+                # import pdb; pdb.set_trace()
     #            import torch ; sst_column = sst_column[torch.arange(len(pos_index))] # dataobject.get('data.gender')
                 pos_indexTMP = pos_index[sst_value == value]
                 pos_lenTMP = pos_len[sst_value == value]

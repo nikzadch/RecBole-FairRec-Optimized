@@ -198,11 +198,20 @@ class Collector(object):
                 self.data_struct.update_tensor('data.' + sst, interaction[sst][torch.arange(len(positive_u))])
 
         if self.register.need('data.usersst'):
-            user_sst = torch.zeros_like(pos_len_list)
+            # user_sst = torch.zeros_like(pos_len_list)
             for sst in self.config['sst_attr_list']:
+                # import pdb; pdb.set_trace()
                 assert sst in interaction.columns, f'{sst} is not in interaction'
-                user_sst = interaction[sst][0].unsqueeze(0)
-                self.data_struct.update_tensor('data.user' + sst, user_sst)
+                try:
+                    if (len(self.data_struct._data_dict.get("data.user" + sst)) != len(self.data_struct._data_dict.get("rec.items")) -1 ): # and ("data.user" + sst): and ("data.user" + sst) in self.data_struct._data_dict.keys():
+                        # import pdb; pdb.set_trace()
+                        self.data_struct._data_dict["data.user" + sst] = torch.tensor([])  # Reset the tensor if it already exists
+                except:
+                    # print("error")
+                    pass
+               # user_sst = interaction[sst][0].unsqueeze(0)
+                # self.data_struct.update_tensor('data.user' + sst, user_sst)
+                self.data_struct.update_tensor('data.user' + sst, interaction[sst][0].unsqueeze(0))
 
     def model_collect(self, model: torch.nn.Module):
         """ Collect the evaluation resource from model.
