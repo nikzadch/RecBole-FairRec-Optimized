@@ -11,8 +11,14 @@ for config in ${CONFIG[@]}; do
     
     for model in ${MODEL[@]}; do
         output_file="${LOG_DIR}Run_$(date +'%H%M')_${model}-${config_arr[1]}.log"
-        command="python3 run_recbole.py --model=${model} --config=Configuration${config_arr[0]}.yaml --dataset=${config_arr[1]} > ${output_file} 2>&1"
-    
+        # command="python3 resume_run_recbole.py --model=${model} --config=Configuration${config_arr[0]}.yaml --dataset=${config_arr[1]} > ${output_file} 2>&1"
+        if [[ "$@" == *-r* ]] || [[ "$@" == *--resume* ]]; then
+            command="python3 resume_run_recbole.py --model=${model} --config=Configuration${config_arr[0]}.yaml --dataset=${config_arr[1]} > ${output_file} 2>&1"
+            echo "# NOTE: running in resume mode, only evaluating"
+        else
+            command="python3 run_recbole.py --model=${model} --config=Configuration${config_arr[0]}.yaml --dataset=${config_arr[1]} > ${output_file} 2>&1"
+            echo "# NOTE: running in FULL training mode."
+        fi
         # Start timer
         start=$(date +%s)
         
