@@ -1,0 +1,3 @@
+# shared encoding data
+
+Encoding = {}
