@@ -28,7 +28,7 @@ from scipy.sparse import coo_matrix
 from recbole.data.interaction import Interaction
 from recbole.utils import FeatureSource, FeatureType,  set_color, ensure_dir
 from recbole.utils.url import decide_download, download_url, extract_zip, makedirs, rename_atomic_files
-
+from recbole.data.EncodingInfo import Encoding
 
 class Dataset:
     """:class:`Dataset` stores the original dataset in memory.
@@ -951,6 +951,8 @@ class Dataset:
 
     def _remap(self, remap_list):
         """Remap tokens using :meth:`pandas.factorize`.
+        Encoding and Mapping happens here. Foreaxmple Gender and Age will be 
+        encoded to 1s and 2s after using this function.
 
         Args:
             remap_list (list): See :meth:`_get_remap_list` for detail.
@@ -962,6 +964,9 @@ class Dataset:
         new_ids_list = np.split(new_ids_list + 1, split_point)
         mp = np.array(['[PAD]'] + list(mp))
         token_id = {t: i for i, t in enumerate(mp)}
+        if len(token_id) == 3:
+            global Encoding
+            Encoding.update({**token_id})
 
         for (feat, field, ftype), new_ids in zip(remap_list, new_ids_list):
             if field not in self.field2id_token:
