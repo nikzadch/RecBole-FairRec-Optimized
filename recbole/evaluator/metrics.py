@@ -34,6 +34,7 @@ from recbole.evaluator.utils import _binary_clf_curve
 from recbole.data import *
 from recbole.evaluator.base_metric import AbstractMetric, TopkMetric, LossMetric, TopkMetricForsst
 from recbole.utils import EvaluatorType
+from recbole.data.EncodingInfo import Encoding
 
 
 # TopK Metrics
@@ -914,6 +915,9 @@ class ValueUnfairness(AbstractMetric):
         super().__init__(config)
         self.sst_key_list = config['sst_attr_list']
         self.mode = config['eval_args']['mode']
+        self.datasetML = config['ML'][0]
+        self.datasetLF = config['LF'][0]
+        self.datasetBR = config['BR'][0]
 
     def used_info(self, dataobject):
         pos_score = dataobject.get('rec.positive_score').numpy()
@@ -987,7 +991,7 @@ class ValueUnfairness(AbstractMetric):
         avg_pred_list /= sst_num
         avg_true_list /= sst_num
 
-        diff = avg_pred_list - avg_true_list
+        diff = np.where(np.isinf(avg_pred_list-avg_true_list) == False, avg_pred_list-avg_true_list, 0) if self.datasetLF == 1 else avg_pred_list - avg_true_list
         diff = np.mean(np.abs(diff[:,0] - diff[:, 1]))
 
         return diff
@@ -1017,6 +1021,9 @@ class AbsoluteUnfairness(AbstractMetric):
 #        self.sst_key = config['sst_attr_list'][0]
         self.sst_key_list = config['sst_attr_list']
         self.mode = config['eval_args']['mode']
+        self.datasetML = config['ML'][0]
+        self.datasetLF = config['LF'][0]
+        self.datasetBR = config['BR'][0]
 
     def used_info(self, dataobject):
         pos_score = dataobject.get('rec.positive_score').numpy()
@@ -1097,8 +1104,16 @@ class AbsoluteUnfairness(AbstractMetric):
         avg_pred_list /= sst_num
         avg_true_list /= sst_num
 
-        diff = np.abs(avg_pred_list - avg_true_list)
-        diff = np.mean(np.abs(diff[:,0] - diff[:, 1]))
+        if self.datasetLF == 1:
+            avg_pred_list=np.array(avg_pred_list, subok=False)
+            avg_true_list=np.array(avg_true_list, subok=False)
+            diff = np.abs(avg_pred_list - avg_true_list)
+            diff = np.asanyarray(diff)
+            diff = np.where(np.isinf(np.abs(avg_pred_list - avg_true_list)) == False, np.abs(avg_pred_list - avg_true_list), 0)
+            diff = np.mean(np.abs(diff[:,0] - diff[:, 1]))
+        else:
+            diff = np.abs(avg_pred_list - avg_true_list)
+            diff = np.mean(np.abs(diff[:,0] - diff[:, 1]))
 
         return diff
 
@@ -1126,6 +1141,9 @@ class UnderUnfairness(AbstractMetric):
         super().__init__(config)
         self.sst_key_list = config['sst_attr_list']
         self.mode = config['eval_args']['mode']
+        self.datasetML = config['ML'][0]
+        self.datasetLF = config['LF'][0]
+        self.datasetBR = config['BR'][0]
 
     def used_info(self, dataobject):
         pos_score = dataobject.get('rec.positive_score').numpy()
@@ -1199,7 +1217,7 @@ class UnderUnfairness(AbstractMetric):
         avg_pred_list /= sst_num
         avg_true_list /= sst_num
 
-        diff = np.where((avg_true_list-avg_pred_list) > 0, avg_true_list - avg_pred_list, 0)
+        diff = np.where(((np.isinf(avg_true_list-avg_pred_list) == False) & ((avg_true_list-avg_pred_list)>0).all()), avg_true_list-avg_pred_list, 0) if self.datasetLF == 1 else np.where((avg_true_list-avg_pred_list) > 0, avg_true_list - avg_pred_list, 0)
         diff = np.mean(np.abs(diff[:,0] - diff[:, 1]))
 
         return diff
@@ -1463,8 +1481,11 @@ class NDCG_sep(TopkMetricForsst):
     #            import torch ; sst_column = sst_column[torch.arange(len(pos_index))] # dataobject.get('data.gender')
                 pos_indexTMP = pos_index[sst_value == value]
                 pos_lenTMP = pos_len[sst_value == value]
-                results.append(self.metric_info(pos_indexTMP, pos_lenTMP))
-    #            metric_dict.update(self.topk_result(f"ndcg of sensitive attribute gender {'Women' if value=='F' or value=='f' else 'Men'}", result))
+                result = self.metric_info(pos_indexTMP, pos_lenTMP)
+                results.append(result)
+                sstEgender = sst == 'gender'
+                sstEage = sst == 'age'
+                metric_dict.update(self.topk_result(f"ndcg of sensitive attribute {'gender' if sstEgender else 'age' if sstEage else 'ERROR'} {'Women' if (value == Encoding.get('F') or value == Encoding.get('f')) and sstEgender else 'Men' if (value == Encoding.get('M') or value == Encoding.get('m')) and sstEgender else 'ElderGroup' if value == Encoding.get('O') and sstEage else 'YoungerGroup' if value == Encoding.get('Y') and sstEage else 'ERROR'}", result))
                 tmp = self.topk_result(f"metric for {sst} : '{value}'", results[iter])
                 final.append(list(tmp.values()))
     #        result = abs(results[0] - results[1]) / ((results[0] + results[1]) / 2) * 100
