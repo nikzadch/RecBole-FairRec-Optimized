@@ -13,13 +13,27 @@ import torch
 import pickle
 import sys
 import os
+import argparse
+import glob
 
 from recbole.config import Config
 from recbole.data import create_dataset, data_preparation, save_split_dataloaders, load_split_dataloaders
 from recbole.utils import init_logger, get_model, get_trainer, init_seed, logger, set_color
 
+def get_latest_model_file(model, dataset):
+    r"""
+        A function to get the latest model file.
+    """
+    saved_dir = f'saved/saved_{dataset}/'
+    pattern = saved_dir + f'{model}-*.pth'
+    files = glob.glob(pattern)
+    if files:
+        latest_file = max(files, key=os.path.getctime)
+        return latest_file
+    else:
+        raise FileNotFoundError(f"No saved model file found for {model} and {dataset}")
 
-def run_recbole(model=None, dataset=None, config_file_list=None, config_dict=None, saved=True):
+def run_recbole(model=None, dataset=None, config_file_list=None, config_dict=None, saved=True, model_file=None):
     r""" A fast running api, which includes the complete process of
     training and testing a model on a specified dataset
 
@@ -31,9 +45,8 @@ def run_recbole(model=None, dataset=None, config_file_list=None, config_dict=Non
         saved (bool, optional): Whether to save the model. Defaults to ``True``.
     """
     # configurations initialization
-    # logger initialization
 
-    model_file = f'saved/saved_{model}/{dataset}_{model}.pth'
+    # model_file = f'saved/saved_{model}/{dataset}_{model}.pth'
 
     config, model, dataset, train_data, valid_data, test_data = load_data_and_model(
         model=model,
@@ -49,7 +62,7 @@ def run_recbole(model=None, dataset=None, config_file_list=None, config_dict=Non
 
 
     init_seed(config['seed'], config['reproducibility'])
-
+    # logger initialization
     init_logger(config)
     logger = getLogger()
 
@@ -68,8 +81,13 @@ def run_recbole(model=None, dataset=None, config_file_list=None, config_dict=Non
     #     train_data, valid_data, saved=saved, show_progress=config['show_progress']
     # )
 
+    # When calculate ItemCoverage metrics, we need to run this code for set item_nums in eval_collector.
+    trainer.eval_collector.data_collect(train_data)
+
     # model evaluation
+    test_result = trainer.evaluate(test_data, load_best_model=saved, model_file=model_file,show_progress=config['show_progress'])
     valid_result = trainer.evaluate(valid_data, load_best_model=saved, model_file=model_file, show_progress=config['show_progress'])
+    logger.info(set_color('test result', 'yellow') + f': {test_result}')
     # best_valid_result = trainer.evaluate(test_data, load_best_model=saved, model_file=model_file, show_progress=config['show_progress'])
 
     logger.info(set_color('valid result', 'yellow') + f': {valid_result}')
@@ -143,8 +161,17 @@ def load_data_and_model(model, dataset, model_file, dataset_file=None, dataloade
 
 if __name__ == '__main__':
     os.chdir(sys.path[0])
-    results = run_recbole()
+    parser = argparse.ArgumentParser()
+    #parser.add_argument('--model', '-m', type=str, default='PFCN_PMF', help='name of models')
+    parser.add_argument('--model', '-m', type=str, default='ItemKNN', help='name of models')
+    parser.add_argument('--dataset', '-d', type=str, default='ml-1M', help='name of datasets')
+    parser.add_argument('--config_files', type=str, default='test.yaml', help='config files')
+
+    args, _ = parser.parse_known_args()
+
+    config_file_list = args.config_files.strip().split(' ') if args.config_files else None
+    model_file = get_latest_model_file(args.model, args.dataset)
+    results = run_recbole(model=args.model, dataset=args.dataset, config_file_list=config_file_list, model_file=model_file)
+    
     print('---'*10)
-    print(results)
-
-
+    #print(results)
