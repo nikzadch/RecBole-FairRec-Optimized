@@ -4,7 +4,8 @@ import csv
 
 # Define the directory path and pattern for log files
 directory = "/home/keyvan/work/code-results"
-pattern = r"Run_\d+_([a-zA-Z]+)-([a-zA-Z0-9-]+)\.log"
+# pattern = r"Run_\d+_([a-zA-Z]+)-([a-zA-Z0-9-]+)\.log"
+pattern = "Run_\d+_([a-zA-Z_]+)-([a-zA-Z0-9-]+)\.log"
 
 # Define the output CSV file path
 output_file = "results.csv"
