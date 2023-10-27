@@ -44,7 +44,7 @@ eval_args:
   mode: uni100
 
 metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "ItemCoverage", "GiniIndex", "DifferentialFairness", 
-        "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage", "NDCG_sep"]
+        "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage", "NDCG_sep", "NDCG_sub"]
 #metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NonParityUnfairness", "AbsoluteUnfairness", "NDCG_sep"]
 
 valid_metric: NDCG@10
