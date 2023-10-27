@@ -51,18 +51,18 @@ header = [
     "Relative Difference of NDCG of sensitive attribute age @5",
     "Relative Difference of NDCG of sensitive attribute age @10",
     "Relative Difference of NDCG of sensitive attribute age @15",
-    "ndcg of sensitive subgroup (Men YoungerGroup)@5",
-    "ndcg of sensitive subgroup (Men YoungerGroup)@10",
-    "ndcg of sensitive subgroup (Men YoungerGroup)@15",
-    "ndcg of sensitive subgroup (Men ElderGroup)@5",
-    "ndcg of sensitive subgroup (Men ElderGroup)@10",
-    "ndcg of sensitive subgroup (Men ElderGroup)@15",
-    "ndcg of sensitive subgroup (Women YoungerGroup)@5",
-    "ndcg of sensitive subgroup (Women YoungerGroup)@10",
-    "ndcg of sensitive subgroup (Women YoungerGroup)@15",
-    "ndcg of sensitive subgroup (Women ElderGroup)@5",
-    "ndcg of sensitive subgroup (Women ElderGroup)@10",
-    "ndcg of sensitive subgroup (Women ElderGroup)@15"
+    "ndcg of sensitive subgroup Men YoungerGroup@5",
+    "ndcg of sensitive subgroup Men YoungerGroup@10",
+    "ndcg of sensitive subgroup Men YoungerGroup@15",
+    "ndcg of sensitive subgroup Men ElderGroup@5",
+    "ndcg of sensitive subgroup Men ElderGroup@10",
+    "ndcg of sensitive subgroup Men ElderGroup@15",
+    "ndcg of sensitive subgroup Women YoungerGroup@5",
+    "ndcg of sensitive subgroup Women YoungerGroup@10",
+    "ndcg of sensitive subgroup Women YoungerGroup@15",
+    "ndcg of sensitive subgroup Women ElderGroup@5",
+    "ndcg of sensitive subgroup Women ElderGroup@10",
+    "ndcg of sensitive subgroup Women ElderGroup@15"
 ]
 
 # Initialize the result list
@@ -85,7 +85,7 @@ for filename in os.listdir(os.path.expanduser(directory)):
         # Find the line with the best valid results
         result_dict = {}
         for line in lines:
-            if "best valid" in line:
+            if "best valid" in line or "valid result" in line:
                 # Extract the best valid results
                 result_line = line.split(":")[2].strip()
 
