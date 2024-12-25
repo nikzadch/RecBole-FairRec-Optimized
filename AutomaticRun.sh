@@ -2,9 +2,10 @@
 
 MODEL=("ItemKNN" "PFCN_DMF" "PFCN_biasedMF" "NFCF" "FOCF" "FairGo_PMF" "FairGo_GCN" "PFCN_PMF" "NGCF" "SGL" "LightGCN" "DMF" "NeuMF" "NNCF" "DGCF")
 CONFIG=("ML,ml-1M" "LFM,LastFM-100K" "BR,BookRec-100K")
+# CONFIG=("ML,ml-1M" "BR,BookRec-100K")
 
 # LOG_DIR is the directory you'd like to save the results, e.g:
-LOG_DIR="~/work/code-results/"
+LOG_DIR="~/work/code-results-2025/"
 
 for config in ${CONFIG[@]}; do
     IFS=',' read -r -a config_arr <<< "$config"
@@ -51,7 +52,7 @@ for config in ${CONFIG[@]}; do
         echo "Code with $output_file took $time_taken to run."
         
         # Save only the last 20 lines of the log file
-        command2="tail -n 20 $output_file > ${output_file}.tmp && mv ${output_file}.tmp $output_file"
+        command2="tail -n 10 $output_file > ${output_file}.tmp && mv ${output_file}.tmp $output_file"
         eval $command2 &
         
         # Wait for 1 second before starting the next iteration

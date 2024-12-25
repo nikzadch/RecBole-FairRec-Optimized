@@ -1413,9 +1413,10 @@ class NDCG_sep(TopkMetricForsst):
     In formula:
 
     |NDCG@5 for group 1 - NDCG@5 for group 2| / ((NDCG@5 for group 1 + NDCG@5 for group 2) / 2) x 100
-    
+
     This will give you a percentage that represents the relative difference between 
-    the two NDCG@5 metrics.
+    the two NDCG@5 metrics.this does not mean that topK has to be 5, it can be calculated
+    on any topK.
     If the percentage difference is small (e.g., less than 10%), it suggests that the 
     two metrics are very similar. If the percentage difference is large 
     (e.g., greater than 50%), it suggests that the two metrics are significantly 
@@ -1516,6 +1517,194 @@ class NDCG_sep(TopkMetricForsst):
 
         result = dcg / idcg
         return result
+    
+
+
+
+class NDCG_sep_Latest_beta(TopkMetricForsst):
+    """
+    Sensitive-Attribute-Seperated NDCG Metric implemented by Keywan (aka. K1) 
+    
+    A new Metric for non-binary sensitive attributes!
+
+    To determine whether multiple e.g. NDCG@5 metrics are too close or too far apart, 
+    you can calculate each individually, and later do further analysis on them and also 
+    we will calculate the Variance between them datapoints.
+
+    We can calculate this on any desired topK.
+    If the variance is small, it suggests that the 
+    accuracies over multiple sensitive groups (group A, B, C in sensitive attribute 'sst')
+    are very similar. If the variance is large, it suggests that the accuracy across multiple groups 
+    are significantly different. 
+
+    Its worthy to note that the magnitude of 
+    the difference may depend on other factors and might need further and deeper analysis.
+
+    """
+    
+
+    smaller = True
+    metric_need = ['data.label', 'data.sst', 'rec.meanrank', 'rec.topk', 'rec.items', 'data.usersst']
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.sst_key_list = config['sst_attr_list']
+        self.datasetML = config['ML'][0]
+        self.datasetLF = config['LF'][0]
+        self.datasetBR = config['BR'][0]
+
+
+    # def get_age_group_label(self, sst, val):
+    @staticmethod
+    def get_age_group_label(sst, val):
+            if sst == 'age':
+                if val == Encoding.get('T'):
+                    return 'Teenager'
+                elif val == Encoding.get('Y'):
+                    return 'Young Adults'
+                elif val == Encoding.get('A'):
+                    return 'Adults'
+                elif val == Encoding.get('S'):
+                    return 'Seniors'
+            return 'ERROR'
+
+    # def variance(self, *values):
+    #     # Convert the input values to a numpy array
+    #     values = np.array(values)
+        
+    #     # Calculate the mean of the values
+    #     mean_value = np.mean(values)
+        
+    #     # Calculate the squared differences from the mean
+    #     squared_diffs = (values - mean_value) ** 2
+        
+    #     # Calculate the variance (average of the squared differences)
+    #     variance_value = np.mean(squared_diffs)
+        
+    #     return variance_value
+
+    def calculate_metric(self, dataobject):
+        pos_index, pos_len, sst_value_dict, sst_value_dictMine = self.used_info(dataobject)
+        
+        metric_dict = {}
+
+        for sst in self.sst_key_list:
+            sst_value = sst_value_dict[sst] if self.datasetLF == 1 else sst_value_dictMine[sst]
+            unique_value = np.unique(sst_value)
+            results = []
+            final = []
+            LASTt = []
+            for iter, value in enumerate(unique_value):
+                # pos_index, pos_len = self.used_info(dataobject)
+                # import pdb; pdb.set_trace()
+                # import torch ; # sst_column = sst_column[torch.arange(len(pos_index))] # dataobject.get('data.gender')
+                pos_indexTMP = pos_index[sst_value == value]
+                pos_lenTMP = pos_len[sst_value == value]
+                result = self.metric_info(pos_indexTMP, pos_lenTMP)
+                results.append(result)
+                sstEgender = (sst == 'gender')
+                sstEage = (sst == 'age')
+                # metric_dict.update(self.topk_result(f"ndcg of sensitive attribute {'gender' if sstEgender else 'age' if sstEage else 'ERROR'} {'Women' if (value == Encoding.get('F') or value == Encoding.get('f')) and sstEgender else 'Men' if (value == Encoding.get('M') or value == Encoding.get('m')) and sstEgender else 'ElderGroup' if value == Encoding.get('O') and sstEage else 'YoungerGroup' if value == Encoding.get('Y') and sstEage else 'ERROR'}", result))
+                metric_dict.update(self.topk_result(f"ndcg of sensitive attribute {'gender' if sstEgender else 'age' if sstEage else 'ERROR'} {'Women' if (value == Encoding.get('F') or value == Encoding.get('f')) and sstEgender else 'Men' if (value == Encoding.get('M') or value == Encoding.get('m')) and sstEgender else NDCG_sep_Latest_TEST.get_age_group_label(sst, value) if sstEage else 'ERROR in line 1607'}", result))
+                
+                value2 = 'Women' if (value == Encoding.get('F') or value == Encoding.get('f')) and sstEgender else 'Men' if (value == Encoding.get('M') or value == Encoding.get('m')) and sstEgender else NDCG_sep_Latest_TEST.get_age_group_label(sst, value) if sstEage else 'ERROR in line 1609'
+                tmp = self.topk_result(f"metric for {sst} : '{value2}'", results[iter])
+                # tmp = self.topk_result(f"metric for {sst} : '{value}'", results[iter])
+                final.append(list(tmp.values()))
+
+            # import pdb; pdb.set_trace()
+            for i in range(len(final[0])):
+                # CALCULATE THE VARIANCE HERE.
+                # variance_value = self.variance(*[final[j][i] for j in range(len(final))])
+                variance_value = np.var([final[j][i] for j in range(len(final))])
+                LASTt.append(variance_value)
+            for i, item in enumerate(LASTt):
+                key = f"Variance of NDCG of sensitive attribute {sst} @{(i+1)*5}"
+                metric_dict[key] = round(item, self.decimal_place + 4)
+
+        # import pdb; pdb.set_trace()
+        return metric_dict
+
+    def metric_info(self, pos_index, pos_len):
+        len_rank = np.full_like(pos_len, pos_index.shape[1])
+        idcg_len = np.where(pos_len > len_rank, len_rank, pos_len)
+
+        iranks = np.zeros_like(pos_index, dtype=np.float64)
+        iranks[:, :] = np.arange(1, pos_index.shape[1] + 1)
+        idcg = np.cumsum(1.0 / np.log2(iranks + 1), axis=1)
+        for row, idx in enumerate(idcg_len):
+            idcg[row, idx:] = idcg[row, idx - 1]
+
+        ranks = np.zeros_like(pos_index, dtype=np.float64)
+        ranks[:, :] = np.arange(1, pos_index.shape[1] + 1)
+        dcg = 1.0 / np.log2(ranks + 1)
+        dcg = np.cumsum(np.where(pos_index, dcg, 0), axis=1)
+
+        result = dcg / idcg
+        return result
+    
+
+
+class NDCG_sub_Latest_beta(TopkMetricForsst):
+    """
+    Sensitive-Attribute-Seperated-Subgroup NDCG Metric implemented by Keywan (aka. K1)
+    This metric is implemented to address a particular problem, it measures the NDCG accuracy
+    for sensitive attribute gender (in the provided datasets, the gender is assumed binary), with
+    respect to their other sensitive attribute which is their age, mostly non-binray in this case, so
+    it returns n (pair-wise) outputs for each topK. (Male, Elder), (Male, Younger), (Female, elder), (Female, Yougner), etc.
+
+    """
+    # smaller = True
+    metric_need = ['data.label', 'data.sst', 'rec.meanrank', 'rec.topk', 'rec.items', 'data.usersst']
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.sst_key_list = config['sst_attr_list']
+        self.datasetML = config['ML'][0]
+        self.datasetLF = config['LF'][0]
+        self.datasetBR = config['BR'][0]
+
+    def calculate_metric(self, dataobject):
+        pos_index, pos_len, sst_value_dict, sst_value_dictMine = self.used_info(dataobject)
+        metric_dict = {}
+        
+        gender_value = sst_value_dict['gender'] if self.datasetLF == 1 else sst_value_dictMine['gender']
+        age_value = sst_value_dict['age'] if self.datasetLF == 1 else sst_value_dictMine['age']
+        gender_list = np.unique(gender_value)
+        age_list = np.unique(age_value)
+        
+        for gender in gender_list:
+            for age in age_list:
+                # if (gender == Encoding.get('F') or gender == Encoding.get('f')) and NDCG_sep_Latest_TEST.get_age_group_label(sst='age', val=age) == "Adults":  # Women Adults
+                #     import pdb; pdb.set_trace()
+                pos_indexTMP = pos_index[(gender_value == gender) & (age_value == age)]
+                pos_lenTMP = pos_len[(gender_value == gender) & (age_value == age)]
+                result = self.metric_info(pos_indexTMP, pos_lenTMP)
+                subgroup_name = f"{'Women' if (gender == Encoding.get('F') or gender == Encoding.get('f')) else 'Men' if (gender == Encoding.get('M') or gender == Encoding.get('m')) else 'ERROR'} {NDCG_sep_Latest_TEST.get_age_group_label(sst='age', val=age)}"
+                key = f"ndcg of sensitive subgroup {subgroup_name}"
+                metric_dict.update(self.topk_result(key, result))
+                # metric_dict[key] = result
+
+        return metric_dict
+
+    def metric_info(self, pos_index, pos_len):
+        len_rank = np.full_like(pos_len, pos_index.shape[1])
+        idcg_len = np.where(pos_len > len_rank, len_rank, pos_len)
+
+        iranks = np.zeros_like(pos_index, dtype=np.float64)
+        iranks[:, :] = np.arange(1, pos_index.shape[1] + 1)
+        idcg = np.cumsum(1.0 / np.log2(iranks + 1), axis=1)
+        for row, idx in enumerate(idcg_len):
+            idcg[row, idx:] = idcg[row, idx - 1]
+
+        ranks = np.zeros_like(pos_index, dtype=np.float64)
+        ranks[:, :] = np.arange(1, pos_index.shape[1] + 1)
+        dcg = 1.0 / np.log2(ranks + 1)
+        dcg = np.cumsum(np.where(pos_index, dcg, 0), axis=1)
+
+        result = dcg / idcg
+        return result
+
 
 class NDCG_sub(TopkMetricForsst):
     """
@@ -1551,7 +1740,7 @@ class NDCG_sub(TopkMetricForsst):
                 pos_lenTMP = pos_len[(gender_value == gender) & (age_value == age)]
                 result = self.metric_info(pos_indexTMP, pos_lenTMP)
                 subgroup_name = f"{'Women' if (gender == Encoding.get('F') or gender == Encoding.get('f')) else 'Men' if (gender == Encoding.get('M') or gender == Encoding.get('m')) else 'ERROR'} {'ElderGroup' if age == Encoding.get('O') else 'YoungerGroup' if age == Encoding.get('Y') else 'ERROR'}"
-                key = f"ndcg of sensitive subgroup ({subgroup_name})"
+                key = f"ndcg of sensitive subgroup {subgroup_name}"
                 metric_dict.update(self.topk_result(key, result))
                 # metric_dict[key] = result
 

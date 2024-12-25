@@ -1,0 +1,38 @@
+In [8]: df.describe()
+Out[8]: 
+        rating:float  play_frequency          rank  cumulative_frequency  estimated_rating:label   label:float
+count   89193.000000    89193.000000  89193.000000          89193.000000            89193.000000  89193.000000
+mean      225.887211        0.848990      1.168769              0.099048                3.603807      3.619791
+std       606.312589        0.261810      0.422303              0.240508                0.962031      0.923784
+min         1.000000        0.000449      1.000000              0.000000                0.001798      1.000000
+25%        39.000000        0.713636      1.000000              0.000000                4.000000      4.000000
+50%       103.000000        1.000000      1.000000              0.000000                4.000000      4.000000
+75%       239.000000        1.000000      1.000000              0.000000                4.000000      4.000000
+max    111455.000000        1.000000      5.000000              0.999551                4.000000      4.000000
+
+In [9]: df.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 89193 entries, 0 to 89192
+Data columns (total 9 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   user_id:token           89193 non-null  object 
+ 1   item_id:token           89193 non-null  object 
+ 2   name:token_seq          89193 non-null  object 
+ 3   rating:float            89193 non-null  int64  
+ 4   play_frequency          89193 non-null  float64
+ 5   rank                    89193 non-null  float64
+ 6   cumulative_frequency    89193 non-null  float64
+ 7   estimated_rating:label  89193 non-null  float64
+ 8   label:float             89193 non-null  int64  
+dtypes: float64(4), int64(2), object(3)
+memory usage: 6.1+ MB
+
+In [26]: df["label:float"].value_counts()
+Out[26]: 
+4    75724
+1     7105
+2     6233
+3      131
+Name: label:float, dtype: int64
+

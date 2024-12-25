@@ -46,9 +46,9 @@ eval_args:
   group_by: user
   order: RO
   mode: uni100
-metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "ItemCoverage", "GiniIndex", "DifferentialFairness", 
-        "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage", "NDCG_sep", "NDCG_sub"]
-#metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NDCG_sep"]
+# metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "ItemCoverage", "GiniIndex", "DifferentialFairness", 
+#         "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage", "NDCG_sep", "NDCG_sub"]
+metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NDCG_sep_Latest_beta", "NDCG_sub_Latest_beta"]
 valid_metric: NDCG@10
 topk: [5, 10, 15]
 # dataset indicator

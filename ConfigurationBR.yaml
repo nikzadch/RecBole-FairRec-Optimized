@@ -49,9 +49,9 @@ eval_args:
   order: RO
   mode: uni100
 
-metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "ItemCoverage", "GiniIndex", "DifferentialFairness","ValueUnfairness", 
-        "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage", "NDCG_sep"]
-#metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NDCG_sep"]
+# metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "ItemCoverage", "GiniIndex", "DifferentialFairness","ValueUnfairness", 
+#         "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage", "NDCG_sep"]
+metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NDCG_sep_Latest_beta"]
 valid_metric: NDCG@10
 topk: [5, 10, 15]
 # a added br to omit second {actually first and it is gender} sensitive attribute for each topK metric since this dataset doesnt have gender and other features

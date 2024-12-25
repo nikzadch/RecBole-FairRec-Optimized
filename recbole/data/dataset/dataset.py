@@ -964,7 +964,7 @@ class Dataset:
         new_ids_list = np.split(new_ids_list + 1, split_point)
         mp = np.array(['[PAD]'] + list(mp))
         token_id = {t: i for i, t in enumerate(mp)}
-        if len(token_id) == 3:
+        if len(token_id) == 3 or len(token_id) == 5:
             global Encoding
             Encoding.update({**token_id})
 

@@ -32,8 +32,24 @@ learner: adam
 # learning_rate: 0.0001
 # eval_step: 1
 # stopping_step: 10
-neg_sampling: 
+
+#************************************************************************
+neg_sampling:
   uniform: 1
+# ************************************************************************
+# LABEL_FIELD: label
+# threshold: {'rating': 3.0}
+# LABEL_FIELD: rating
+# threshold:
+  # rating: 3
+
+# train_neg_sample_args: None
+# train_neg_sample_args: 0
+# training_neg_sample_num: 0
+# train_neg_sample_args: ~
+# neg_sampling: None
+#************************************************************************
+
 # weight_decay: 0.00001
 
 # evalution settings
@@ -43,9 +59,9 @@ eval_args:
   order: RO
   mode: uni100
 
-metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "ItemCoverage", "GiniIndex", "DifferentialFairness", 
-        "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage", "NDCG_sep", "NDCG_sub"]
-#metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NonParityUnfairness", "AbsoluteUnfairness", "NDCG_sep"]
+# metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "ItemCoverage", "GiniIndex", "DifferentialFairness", 
+        # "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage", "NDCG_sep", "NDCG_sub"]
+metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NDCG_sep_Latest_beta", "NDCG_sub_Latest_beta"]
 
 valid_metric: NDCG@10
 topk: [5, 10, 15]
@@ -58,3 +74,4 @@ popularity_ratio: 0.1
 eval_batch_size: 4096
 loss_decimal_place: 4
 metric_decimal_place: 4
+# metric_decimal_place: 8

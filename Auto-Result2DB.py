@@ -3,12 +3,12 @@ import re
 import csv
 
 # Define the directory path and pattern for log files
-directory = "/home/keyvan/work/code-results"
+directory = "/home/keyvan/work/code-results-2025"
 # pattern = r"Run_\d+_([a-zA-Z]+)-([a-zA-Z0-9-]+)\.log"
 pattern = "Run_\d+_([a-zA-Z_]+)-([a-zA-Z0-9-]+)\.log"
 
 # Define the output CSV file path
-output_file = "results.csv"
+output_file = "TESTresults.csv"
 
 # Define the header for the CSV file
 header = [
@@ -62,7 +62,49 @@ header = [
     "ndcg of sensitive subgroup Women YoungerGroup@15",
     "ndcg of sensitive subgroup Women ElderGroup@5",
     "ndcg of sensitive subgroup Women ElderGroup@10",
-    "ndcg of sensitive subgroup Women ElderGroup@15"
+    "ndcg of sensitive subgroup Women ElderGroup@15",
+    "Variance of NDCG of sensitive attribute gender @5",
+    "Variance of NDCG of sensitive attribute gender @10",
+    "Variance of NDCG of sensitive attribute gender @15",
+    "ndcg of sensitive attribute age Young Adults@5",
+    "ndcg of sensitive attribute age Young Adults@10",
+    "ndcg of sensitive attribute age Young Adults@15",
+    "ndcg of sensitive attribute age Adults@5",
+    "ndcg of sensitive attribute age Adults@10",
+    "ndcg of sensitive attribute age Adults@15",
+    "ndcg of sensitive attribute age Teenager@5",
+    "ndcg of sensitive attribute age Teenager@10",
+    "ndcg of sensitive attribute age Teenager@15",
+    "ndcg of sensitive attribute age Seniors@5",
+    "ndcg of sensitive attribute age Seniors@10",
+    "ndcg of sensitive attribute age Seniors@15",
+    "Variance of NDCG of sensitive attribute age @5",
+    "Variance of NDCG of sensitive attribute age @10",
+    "Variance of NDCG of sensitive attribute age @15",
+    "ndcg of sensitive subgroup Men Young Adults@5",
+    "ndcg of sensitive subgroup Men Young Adults@10",
+    "ndcg of sensitive subgroup Men Young Adults@15",
+    "ndcg of sensitive subgroup Men Adults@5",
+    "ndcg of sensitive subgroup Men Adults@10",
+    "ndcg of sensitive subgroup Men Adults@15",
+    "ndcg of sensitive subgroup Men Teenager@5",
+    "ndcg of sensitive subgroup Men Teenager@10",
+    "ndcg of sensitive subgroup Men Teenager@15",
+    "ndcg of sensitive subgroup Men Seniors@5",
+    "ndcg of sensitive subgroup Men Seniors@10",
+    "ndcg of sensitive subgroup Men Seniors@15",
+    "ndcg of sensitive subgroup Women Young Adults@5",
+    "ndcg of sensitive subgroup Women Young Adults@10",
+    "ndcg of sensitive subgroup Women Young Adults@15",
+    "ndcg of sensitive subgroup Women Adults@5",
+    "ndcg of sensitive subgroup Women Adults@10",
+    "ndcg of sensitive subgroup Women Adults@15",
+    "ndcg of sensitive subgroup Women Teenager@5",
+    "ndcg of sensitive subgroup Women Teenager@10",
+    "ndcg of sensitive subgroup Women Teenager@15",
+    "ndcg of sensitive subgroup Women Seniors@5",
+    "ndcg of sensitive subgroup Women Seniors@10",
+    "ndcg of sensitive subgroup Women Seniors@15",
 ]
 
 # Initialize the result list
@@ -85,7 +127,8 @@ for filename in os.listdir(os.path.expanduser(directory)):
         # Find the line with the best valid results
         result_dict = {}
         for line in lines:
-            if "best valid" in line or "valid result" in line:
+            # if "best valid" in line or "valid result" in line:
+            if "test result" in line:
                 # Extract the best valid results
                 result_line = line.split(":")[2].strip()
 
