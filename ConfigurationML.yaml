@@ -59,9 +59,11 @@ eval_args:
   order: RO
   mode: uni100
 
-# metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "ItemCoverage", "GiniIndex", "DifferentialFairness", 
-        # "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage", "NDCG_sep", "NDCG_sub"]
-metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NDCG_sep_Latest_beta", "NDCG_sub_Latest_beta"]
+metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "AveragePopularity", "ItemCoverage", # "GiniIndex", "DifferentialFairness", 
+        # "NonParityUnfairness", "ValueUnfairness", "AbsoluteUnfairness", "UnderUnfairness", "OverUnfairness", "TailPercentage", # "NDCG_sep", "NDCG_sub",
+        "NDCG_sep_Latest_beta", "Recall_sep_Latest_beta", "Hit_sep_Latest_beta", "MRR_sep_Latest_beta", "Precision_sep_Latest_beta", 
+        "NDCG_sub_Latest_beta", "Recall_sub_Latest_beta", "Hit_sub_Latest_beta", "MRR_sub_Latest_beta", "Precision_sub_Latest_beta"]
+# metrics: ["NDCG", "Recall", "Hit", "MRR", "Precision", "NDCG_sep_Latest_beta", "NDCG_sub_Latest_beta", "Precision_sep_Latest_beta", "Precision_sub_Latest_beta"]
 
 valid_metric: NDCG@10
 topk: [5, 10, 15]

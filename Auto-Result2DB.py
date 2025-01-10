@@ -1,3 +1,4 @@
+## NEED 2 FIX THIS SO ONLY THE FINAL RESULTS GET READ (although it already happens. need to make sure it always happens logically) ##
 import os
 import re
 import csv

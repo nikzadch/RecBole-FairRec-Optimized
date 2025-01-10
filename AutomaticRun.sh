@@ -5,7 +5,7 @@ CONFIG=("ML,ml-1M" "LFM,LastFM-100K" "BR,BookRec-100K")
 # CONFIG=("ML,ml-1M" "BR,BookRec-100K")
 
 # LOG_DIR is the directory you'd like to save the results, e.g:
-LOG_DIR="~/work/code-results-2025/"
+LOG_DIR="~/work/code-results-THESIS/"
 
 for config in ${CONFIG[@]}; do
     IFS=',' read -r -a config_arr <<< "$config"
@@ -51,7 +51,7 @@ for config in ${CONFIG[@]}; do
         echo ""
         echo "Code with $output_file took $time_taken to run."
         
-        # Save only the last 20 lines of the log file
+        # Save only the last 10 lines of the log file
         command2="tail -n 10 $output_file > ${output_file}.tmp && mv ${output_file}.tmp $output_file"
         eval $command2 &
         
